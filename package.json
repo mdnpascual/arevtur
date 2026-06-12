@@ -1,6 +1,6 @@
 {
   "name": "arevtur",
-  "version": "9.4.0",
+  "version": "9.4.3",
   "main": "src/main.js",
   "scripts": {
     "start": "electron --trace-warnings .",
@@ -9,7 +9,7 @@
     "build": "npx rimraf dist && build",
     "build2": "npx rimraf dist && electron-builder -w",
     "windowShip": "git push && git push --tags && npx rimraf dist && electron-builder -wp always",
-    "postversion": "git add package.json package-lock.json && git commit -m %npm_package_version% && git tag v%npm_package_version% && npm run windowShip"
+    "postversion": "git push && git push --tags && npm run windowShip"
   },
   "author": "mdnpascual",
   "license": "ISC",

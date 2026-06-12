@@ -1,9 +1,7 @@
 const appData = require('../services/appData');
 const path = require('path');
-const {ViewHandle: ViewHandleBase, ScreenMouse} = require('js-desktop-base');
-const pobApi = require('../services/pobApi/pobApi');
 const ElectronWindow = require('../services/ElectronWindow');
-const {ipcMain, screen} = require('electron');
+const {ipcMain} = require('electron');
 
 let windowWrapper =
 	appData.isDev ?

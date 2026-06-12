@@ -7,7 +7,7 @@ const pobApi = require('../../../services/pobApi/pobApi');
 const appData = require('../../../services/appData');
 const configForRenderer = require('../../../services/config/configForRenderer');
 const defaultConfig = require('../../../services/config/defaultConfig.json');
-const {updateElementChildren, round} = require('../../../util/util');
+const {updateElementChildren} = require('../../../util/util');
 
 customElements.define(name, class extends XElement {
 	static get attributeTypes() {
