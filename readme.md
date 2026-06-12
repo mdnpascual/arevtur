@@ -1,60 +1,43 @@
-# Arevtur (Private)
+# Arevtur (Fork)
 
-## Release Workflow
+This is a fork of [mahhov/arevtur](https://github.com/mahhov/arevtur) — a Path of Exile trade search tool with PoB integration, value-v-price graph, and more.
 
-### Quick release (private build only)
+This fork picks up development starting from version **0.5**, focusing on **PoE 2 support only**. PoE 1 functionality is not actively maintained.
 
-```bash
-npm version patch
-```
+## Changes from the original
 
-This single command:
-1. Bumps version in `package.json` and `package-lock.json`
-2. Commits the version bump
-3. Creates a git tag (e.g. `v9.4.1`)
-4. Pushes commit + tag to `arevtur-private`
-5. Builds the Windows exe
-6. Publishes the exe as a GitHub release on `arevtur-private`
+### Open Trade (replaces Travel to Hideout)
 
-After publishing, edit the release description on GitHub to add changelog notes.
+The "Travel to Hideout" feature was broken due to API changes. It has been replaced with an **Open Trade** button that constructs a targeted trade URL matching the item's exact stats, base type, and seller account, then opens it in your default browser. This lets you quickly navigate to the listing on the trade site.
 
-### Version bump options
+### Way of the Stonefist Ascendancy Support
 
-| Command | Example | When to use |
-|---------|---------|-------------|
-| `npm version patch` | 9.4.0 → 9.4.1 | Bug fixes, small tweaks |
-| `npm version minor` | 9.4.0 → 9.5.0 | New features |
-| `npm version major` | 9.4.0 → 10.0.0 | Breaking changes |
+Added support for the **Way of the Stonefist** (Martial Artist) ascendancy node. When this node is allocated in your PoB build, Arevtur automatically transforms glove affix text to their converted values before evaluating them in PoB. This ensures accurate item valuations for builds using this ascendancy.
 
-### Full release (private + public)
+### Status Filter
 
-1. **Release private build:**
-   ```bash
-   npm version patch
-   ```
+Added a status filter dropdown in the results panel:
+- **All** — show all items
+- **Buyout + Online + AFK** — hide offline sellers
+- **Buyout + Online** — hide offline and AFK sellers
+- **Buyout Only** — show only instantly purchasable items
 
-2. **Release public build (one command):**
-   ```bash
-   npm run release-public
-   ```
-   This syncs to `../arevtur-public`, sanitizes package.json, builds the exe, publishes it, commits, and pushes.
+### Updated poe2scout API
 
-3. Edit release descriptions on both GitHub repos.
+Updated currency pricing API calls to use the latest poe2scout endpoints and response format.
 
-### Development
+### Auto-updates
 
-```bash
-npm run start          # default (loads debug features if src/debug/ exists)
-npm run start_local    # explicitly load debug features
-npm run start_release  # force debug features off (test public version locally)
-npm run test           # run tests
-npm run build2         # build exe without publishing
-```
+Auto-update source has been changed to this repository. Updates will be published here.
 
-### Syncing to public repo
+---
 
-```bash
-npm run sync-public
-```
+## Original README
 
-This mirrors the codebase to `../arevtur-public`, excluding `src/debug/`, `.kiro/`, `dist/`, and `node_modules`. It also sanitizes `package.json` to remove the private token and private-only scripts.
+For the full feature documentation (PoB integration, graph usage, mod viewer, etc.), see the [original project](https://github.com/mahhov/arevtur).
+
+## Credits
+
+All original credits apply — see the [original repository](https://github.com/mahhov/arevtur#credits).
+
+Development assisted by Claude (AI pair programming).

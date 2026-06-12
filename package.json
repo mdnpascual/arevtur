@@ -27,12 +27,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mdnpascual/arevtur-private.git"
+    "url": "git+https://github.com/mdnpascual/arevtur.git"
   },
   "bugs": {
-    "url": "https://github.com/mdnpascual/arevtur-private/issues"
+    "url": "https://github.com/mdnpascual/arevtur/issues"
   },
-  "homepage": "https://github.com/mdnpascual/arevtur-private#readme",
+  "homepage": "https://github.com/mdnpascual/arevtur#readme",
   "description": "Trading tool for Path of Exile",
   "build": {
     "publish": {
