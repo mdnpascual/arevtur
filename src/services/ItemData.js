@@ -4,20 +4,13 @@ const {maxIndex, round, unitText} = require('../util/util');
 const pobConsts = require('./pobApi/pobConsts');
 const configData = require('./config/configData');
 
-let debugUtils;
-if (process.env.AREVTUR_BUILD !== 'release') {
-	try { debugUtils = require('../debug/debugUtils'); } catch (e) { debugUtils = null; }
-} else {
-	debugUtils = null;
-}
 
 class ItemData {
-	constructor(version2, league, affixValueShift, queryDefenseProperties, priceShifts, queryId, queryNotes, tradeApiItemData, queryStats) {
+	constructor(version2, league, affixValueShift, queryDefenseProperties, priceShifts, queryId, queryNotes, tradeApiItemData) {
 		this.version2 = version2;
 		this.league = league;
 		this.affixValueShift = affixValueShift;
 		this.queryDefenseProperties = queryDefenseProperties;
-		this.queryStats = queryStats || [];
 		this.priceShifts = priceShifts;
 		this.queryId = queryId;
 		this.queryNotes = queryNotes;
@@ -49,9 +42,13 @@ class ItemData {
 		this.runeMods = tradeApiItemData.item.runeMods || [];
 		this.enchantMods = tradeApiItemData.item.enchantMods || [];
 		this.implicitMods = tradeApiItemData.item.implicitMods || [];
-		this.fracturedMods = tradeApiItemData.item.fracturedMods || [];
-		this.explicitMods = tradeApiItemData.item.explicitMods || [];
-		this.desecratedMods = tradeApiItemData.item.desecratedMods || [];
+		let rawExplicitMods = (tradeApiItemData.item.explicitMods || [])
+			.map(m => typeof m === 'string' ? {description: m} : m);
+		this.fracturedMods = tradeApiItemData.item.fracturedMods?.map(m => typeof m === 'string' ? m : m.description) ||
+			rawExplicitMods.filter(m => m.flags?.fractured).map(m => m.description);
+		this.explicitMods = rawExplicitMods.filter(m => !m.flags?.fractured && !m.flags?.desecrated).map(m => m.description);
+		this.desecratedMods = tradeApiItemData.item.desecratedMods?.map(m => typeof m === 'string' ? m : m.description) ||
+			rawExplicitMods.filter(m => m.flags?.desecrated).map(m => m.description);
 		this.craftedMods = tradeApiItemData.item.craftedMods || [];
 		this.pseudoMods = tradeApiItemData.item.pseudoMods || [];
 		this.accountText = [tradeApiItemData.listing.account.name, tradeApiItemData.listing.account.lastCharacterName]
@@ -61,7 +58,7 @@ class ItemData {
 		this.whisperText = tradeApiItemData.listing.whisper;
 		this.instantBuyoutFee = tradeApiItemData.listing.fee || 0;
 		this.travelHideoutToken = tradeApiItemData.listing.hideout_token;
-		this.onlineStatus = ItemData.onlineStatus(tradeApiItemData.listing.account.online, debugUtils ? this.travelHideoutToken : null, this.queryNotes);
+		this.onlineStatus = ItemData.onlineStatus(tradeApiItemData.listing.account.online, this.travelHideoutToken, this.queryNotes);
 		this.date = tradeApiItemData.listing.indexed;
 		this.note = tradeApiItemData.item.note;
 		this.text = ItemData.decode64(tradeApiItemData.item.extended.text);
@@ -132,6 +129,10 @@ class ItemData {
 			.then(resolved => this.craftValuePromise.resolved = resolved)
 			.catch(() => 0);
 
+		// Used by buildItemTradeUrl (currently shelved). To restore:
+		// 1. Add `queryStats` param back to constructor, set `this.queryStats = queryStats || []`
+		// 2. Pass `apiQuery.query.stats` from TradeQuery.js constructor call
+		// 3. See src/services/tradeQuery/itemTradeUrl.js for usage
 		this.listingCurrency = tradeApiItemData.listing.price.currency;
 		this.listingAmount = tradeApiItemData.listing.price.amount;
 		this.pricePromise = ItemData.price(

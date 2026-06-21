@@ -1,11 +1,10 @@
-const {XPromise} = require('js-desktop-base');
-const httpRequest = require('../util/browserHttpRequest');
+const {httpRequest, XPromise} = require('js-desktop-base');
 const poeNinjaApi = require('./poeNinjaApi');
 const configData = require('./config/configData');
 const {unique, escapeRegex} = require('../util/util');
-const Poe2ScoutData = require('./pricer/Poe2ScoutData');
+const nodeFetch = require('node-fetch');
 
-let localStorage = globalThis.localStorage;
+let localStorage;
 if (typeof localStorage === 'undefined') {
 	let data = {};
 	localStorage = {
@@ -37,7 +36,6 @@ class ApiConstants {
 			this.cache = JSON.parse(localStorage.getItem('api-constants-cache'));
 			Object.values(this.cache).forEach(cached => cached.promise = null);
 		} catch (e) {
-			console.warn('failed to read apiConstants cache', e);
 		}
 		this.cache ||= {};
 	}
@@ -321,6 +319,37 @@ class ApiConstants {
 		/* {alt: .125, ...} */
 	}
 
+	static async initOrbCurrencies(version2, league) {
+		let staticData = ApiConstants.get('static', version2);
+		let currencyPrices = nodeFetch(
+			`https://orbwatch.trade/api/preload?realm=${league}`,
+			{
+				headers: {
+					referer: 'https://orbwatch.trade/',
+					'x-csrf-token': 'x',
+					cookie: 'csrf_token=x',
+				},
+			},
+		);
+		staticData = JSON.parse((await staticData).string);
+		currencyPrices = await (await currencyPrices).json();
+
+		let tuples = staticData.result
+			.find(({id}) => id === 'Currency').entries
+			.map(({id}) => {
+				let price = currencyPrices.prices.currency
+					.find(line => line.item_id === id && line.price_type === 'buy')
+					?.item_price;
+				return [id, Number(price)];
+			})
+			.filter(v => v);
+
+		let currencies = Object.fromEntries(tuples);
+		currencies.exalted = 1;
+		return currencies;
+		/* {alt: .125, ...} */
+	}
+
 	static async initScoutCurrencies(version2, league) {
 		let realm = version2 ? 'poe2' : 'poe1';
 		let scoutUrl = `https://poe2scout.com/api/${realm}/Leagues/${encodeURIComponent(league)}/Currencies/ByCategory?Category=Currency&ReferenceCurrency=exalted&Page=1&PerPage=50`;
@@ -373,13 +402,11 @@ class ApiConstants {
 
 	static get api() {
 		return 'https://www.pathofexile.com';
-		return 'https://www.pathofexile.com';
 	}
 
 	static createRequestHeader(sessionId = undefined) {
 		return {
 			// Without a non-empty user-agent header, PoE will return 403.
-			// This will be ignored anyway because now we're using browser's fetch() api which overrides user-agent
 			'User-Agent': `arevtur2`,
 			Cookie: sessionId ? `POESESSID=${sessionId}` : '',
 			'content-type': 'application/json',

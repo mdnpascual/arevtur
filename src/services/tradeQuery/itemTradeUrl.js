@@ -1,3 +1,15 @@
+// SHELVED: This file is not currently imported anywhere.
+// It was used by ItemListing.js to open the PoE trade website for an item (public build "Open Trade" button).
+// Now that direct whisper + travel hideout work natively via the API, this is no longer needed.
+//
+// To restore:
+// 1. In ItemListing.js: import {buildItemTradeUrl} from '../../../services/tradeQuery/itemTradeUrl'
+// 2. In ItemListing.js: import {shell} from 'electron'
+// 3. Add a button click handler: shell.openExternal(buildItemTradeUrl(version2, league, itemData))
+// 4. In ItemData.js: add `queryStats` param back to constructor (see comment there)
+//    and set this.queryStats = queryStats || []
+// 5. In TradeQuery.js: pass apiQuery.query.stats to the ItemData constructor
+
 const querystring = require('querystring');
 const apiConstants = require('../apiConstants');
 
