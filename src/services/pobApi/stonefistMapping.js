@@ -1003,6 +1003,9 @@ function transformGloveText(text) {
 	let result = [];
 	for (let i = 0; i < lines.length; i++) {
 		let line = stripMarkup(lines[i]);
+		// Remove original defense lines
+		if (/^(Armour|Evasion Rating|Energy Shield|Ward): \d+/.test(line))
+			continue;
 		let matched = false;
 		for (let mapping of mappings) {
 			let isMultiLine = mapping.pattern.source.includes('\\n');
@@ -1053,6 +1056,21 @@ function transformGloveText(text) {
 		}
 		if (!matched) result.push(lines[i]);
 	}
+	let isRuneforged = lines.some(l => /Runeforged/i.test(stripMarkup(l)));
+	if (isRuneforged) {
+		result.push('Has +2 to Evasion Rating per player level');
+		result.push('Has +1 to maximum Energy Shield per player level');
+		result.push('Has +1 to maximum Runic Ward per player level');
+	} else {
+		result.push('Has +3 to Evasion Rating per player level');
+		result.push('Has +1 to maximum Energy Shield per player level');
+	}
+
+	// Replace base name with Fists of Stone so PoB uses the correct zero-base calculation
+	let baseIdx = result.findIndex(l => l.startsWith('Item Class')) + 1;
+	if (baseIdx > 0 && baseIdx < result.length)
+		result[baseIdx] = 'Fists of Stone';
+
 	return result.join('\n');
 }
 

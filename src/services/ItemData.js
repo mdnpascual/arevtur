@@ -86,6 +86,7 @@ class ItemData {
 			?.find(property => property.name.includes('Quality'));
 		let qualityNumber = Number(qualityProperty?.values[0][0].replace('%', '') || 0);
 		let qualityText = qualityProperty?.name.match(/\((.*)\)/)?.[1];
+		this.qualityNumber = qualityNumber;
 		this.quality = [`${qualityNumber} quality`, qualityText].filter(v => v).join(' - ');
 
 		// defenses
@@ -202,6 +203,7 @@ class ItemData {
 		return [
 			'Item Class',
 			this.subtype,
+			`Quality: ${this.qualityNumber}`,
 			'Sockets: ' + 'S '.repeat(this.sockets[0].length),
 			...includeRunesAndAnoint ? this.runeMods : [],
 			...includeRunesAndAnoint || this.corrupted ?

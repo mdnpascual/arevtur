@@ -122,13 +122,13 @@ describe('stonefistMapping', () => {
 	describe('unmatched lines pass through', () => {
 		it('preserves lines that dont match any pattern', () => {
 			let result = transformGloveText('Some Unknown Mod');
-			assert.strictEqual(result, 'Some Unknown Mod');
+			assert.strictEqual(result, 'Some Unknown Mod\nHas +3 to Evasion Rating per player level\nHas +1 to maximum Energy Shield per player level');
 		});
 
-		it('preserves Item Class and base name', () => {
+		it('replaces base name with Fists of Stone', () => {
 			let input = 'Item Class\nMoulded Mitts\n+59 to maximum Energy Shield';
 			let result = transformGloveText(input);
-			assert.ok(result.startsWith('Item Class\nMoulded Mitts\n'));
+			assert.ok(result.startsWith('Item Class\nFists of Stone\n'));
 		});
 	});
 
