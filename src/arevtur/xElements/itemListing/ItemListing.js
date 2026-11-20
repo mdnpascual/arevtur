@@ -52,15 +52,15 @@ customElements.define(name, class extends XElement {
 		this.$('#body').text = itemData.displayLines[1];
 		this.$('#account-text').text = itemData.displayLines[2];
 
-		this.$('#weight-value').text = `Weighted: ${round(itemData.weightedValue, 1)}`;
+		this.$('#weight-value').text = `Weight: ${round(itemData.weightedValue, 1)}`;
 		let expandedValues = Object.entries(itemData.weightedValueDetails)
 			.filter(([_, value]) => value);
 		this.$('#weight-value').tooltip = expandedValues.length > 1 ?
 			expandedValues.map(([name, value]) => `${round(value, 1)} ${name}`).join(' + ') : '';
-		this.$('#build-value').text = `Build: ${(await itemData.buildValuePromise).value}`;
+		this.$('#build-value').text = `Listed: ${round((await itemData.buildValuePromise).value, 1)}`;
 		this.$('#build-value').tooltip = (await itemData.buildValuePromise).text;
 		this.$('#build-value').tooltipRight = (await itemData.buildValuePromise).textRight || '';
-		this.$('#craft-value').text = `Craft: ${(await itemData.craftValuePromise).value}`;
+		this.$('#craft-value').text = `Fitted: ${round((await itemData.craftValuePromise).value, 1)}`;
 		this.$('#craft-value').tooltip = (await itemData.craftValuePromise).text;
 		this.$('#craft-value').tooltipRight = (await itemData.craftValuePromise).textRight || '';
 		this.$('#price').text = (await itemData.pricePromise).priceSummary;
