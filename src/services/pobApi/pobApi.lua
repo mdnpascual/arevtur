@@ -19,6 +19,8 @@ debugRespond('HeadlessWrapper loaded')
 local dkjson = require 'dkjson'
 debugRespond('dkjson loaded')
 
+local craftRunes = require 'craftRunes'
+
 -- infra
 
 local function readFile(path)
@@ -155,6 +157,8 @@ local function evalEquippingItem(itemText, copyRunesAndAnoint)
     end
     item:NormaliseQuality()
     item:BuildAndParseRaw()
+    -- runes PoB detected from the trade item's rune lines; copied because item.runes is replaced per slot
+    local tradeRunes = { unpack(item.runes or {}) }
 
     -- based off of ItemsTabClass:AddItemTooltip
     local comparisons = {}
@@ -169,10 +173,7 @@ local function evalEquippingItem(itemText, copyRunesAndAnoint)
                     if not item.corrupted and item.itemSocketCount < maxRunes then
                         item.itemSocketCount = maxRunes
                     end
-                    item.runes = equippedItem.runes
-                    for i = equippedItem.itemSocketCount, item.itemSocketCount do
-                        equippedItem.runes[i] = equippedItem.runes[1]
-                    end
+                    item.runes = craftRunes.buildCraftRunes(tradeRunes, equippedItem.runes, item.itemSocketCount)
 
                     if not item.corrupted then
                         for _, mod in ipairs(equippedItem.enchantModLines) do

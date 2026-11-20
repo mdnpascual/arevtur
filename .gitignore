@@ -6,4 +6,6 @@ dist-linux
 lib
 git_token
 .kiro/
+.claude/
+CLAUDE.md
 src/debug/

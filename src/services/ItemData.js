@@ -63,7 +63,7 @@ class ItemData {
 		this.note = tradeApiItemData.item.note;
 		this.text = ItemData.decode64(tradeApiItemData.item.extended.text);
 		this.type = ItemData.typeFromItemText(this.text)
-			|| tradeApiItemData.item.properties?.find(p => p.type === 109)?.name; // e.g. 'Gloves'
+			|| tradeApiItemData.item.properties?.find(p => p.type === 109)?.name?.replace(/[\[\]]/g, ''); // e.g. 'Gloves'
 		this.debug = tradeApiItemData;
 
 		// sockets
@@ -214,6 +214,9 @@ class ItemData {
 			...this.explicitMods,
 			...this.desecratedMods,
 			...this.craftedMods,
+			// craft score: let PoB work out the trade item's runes from marked rune lines (see craftRunes.lua).
+			// PoB only keeps rune lines it can't parse (e.g. 'Can roll Soul modifiers') after an explicit mod, so they go here.
+			...!includeRunesAndAnoint && this.version2 ? this.runeMods.map(mod => `${mod} (rune)`) : [],
 			this.fractured ? 'Fractured' : '',
 			this.desecrated ? 'Desecrated' : '',
 			this.corrupted ? 'Corrupted' : '',
