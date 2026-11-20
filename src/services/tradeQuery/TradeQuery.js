@@ -5,6 +5,7 @@ const Stream = require('../../util/Stream');
 const ItemData = require('../ItemData');
 const TradeQuerySearcher = require('./TradeQuerySearcher');
 const TradeQueryItemGetter = require('./TradeQueryItemGetter');
+const {decodeEmbeddedSearch} = require('../../util/tradeUrl');
 
 
 
@@ -190,6 +191,9 @@ class TradeQuery {
 	static itemGetter = new TradeQueryItemGetter();
 
 	static async fromApiHtmlUrl(sessionId, tradeSearchUrl) {
+		let embedded = decodeEmbeddedSearch(tradeSearchUrl);
+		if (embedded)
+			return {query: embedded.query || embedded, sort: {'statgroup.0': 'desc'}};
 		tradeSearchUrl = tradeSearchUrl.replace('.com/trade', '.com/api/trade');
 		let response = await httpRequest.get(tradeSearchUrl, {}, apiConstants.createRequestHeader(sessionId));
 		let jsonString = response.string;

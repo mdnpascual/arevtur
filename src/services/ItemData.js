@@ -5,6 +5,9 @@ const pobConsts = require('./pobApi/pobConsts');
 const configData = require('./config/configData');
 
 
+// New trade API may return mods as {description, flags} objects instead of strings.
+let modTexts = mods => (mods || []).map(m => typeof m === 'string' ? m : m.description);
+
 class ItemData {
 	constructor(version2, league, affixValueShift, queryDefenseProperties, priceShifts, queryId, queryNotes, tradeApiItemData) {
 		this.version2 = version2;
@@ -39,9 +42,9 @@ class ItemData {
 		this.mirrored = tradeApiItemData.item.duplicated;
 		this.split = tradeApiItemData.item.split;
 		this.influences = Object.keys(tradeApiItemData.item.influences || {});
-		this.runeMods = tradeApiItemData.item.runeMods || [];
-		this.enchantMods = tradeApiItemData.item.enchantMods || [];
-		this.implicitMods = tradeApiItemData.item.implicitMods || [];
+		this.runeMods = modTexts(tradeApiItemData.item.runeMods);
+		this.enchantMods = modTexts(tradeApiItemData.item.enchantMods);
+		this.implicitMods = modTexts(tradeApiItemData.item.implicitMods);
 		let rawExplicitMods = (tradeApiItemData.item.explicitMods || [])
 			.map(m => typeof m === 'string' ? {description: m} : m);
 		this.fracturedMods = tradeApiItemData.item.fracturedMods?.map(m => typeof m === 'string' ? m : m.description) ||
@@ -49,8 +52,8 @@ class ItemData {
 		this.explicitMods = rawExplicitMods.filter(m => !m.flags?.fractured && !m.flags?.desecrated).map(m => m.description);
 		this.desecratedMods = tradeApiItemData.item.desecratedMods?.map(m => typeof m === 'string' ? m : m.description) ||
 			rawExplicitMods.filter(m => m.flags?.desecrated).map(m => m.description);
-		this.craftedMods = tradeApiItemData.item.craftedMods || [];
-		this.pseudoMods = tradeApiItemData.item.pseudoMods || [];
+		this.craftedMods = modTexts(tradeApiItemData.item.craftedMods);
+		this.pseudoMods = modTexts(tradeApiItemData.item.pseudoMods);
 		this.accountText = [tradeApiItemData.listing.account.name, tradeApiItemData.listing.account.lastCharacterName]
 			.filter(v => v)
 			.join(' > ');

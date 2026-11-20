@@ -3,8 +3,14 @@ const assert = require('node:assert');
 const path = require('path');
 
 // Mock dependencies before requiring apiConstants
+let requests = [];
+let responses = {}; // substring of url -> string body
 const httpRequestMock = {
-	get: () => Promise.resolve({string: '{}'}),
+	get: endpoint => {
+		requests.push(endpoint);
+		let key = Object.keys(responses).find(k => endpoint.includes(k));
+		return Promise.resolve({string: responses[key]});
+	},
 };
 const jsDesktopBasePath = require.resolve('js-desktop-base');
 require.cache[jsDesktopBasePath] = {
@@ -24,195 +30,84 @@ require.cache[configDataPath] = {
 	exports: {config: {version2: true, league: 'TestLeague'}},
 };
 
-const apiConstantsPath = path.resolve(__dirname, '../src/services/apiConstants.js');
-// Clear cache to get fresh instance
-delete require.cache[apiConstantsPath];
+const apiConstants = require('../src/services/apiConstants');
+const Poe2ScoutData = require('../src/services/pricer/Poe2ScoutData');
+const ApiConstants = apiConstants.constructor;
 
-// We need to test initScoutCurrencies and initCurrencies logic directly
-// Since they're static methods on the class, we'll replicate the parsing logic
+const staticBody = JSON.stringify({result: [{id: 'Currency', entries: [
+	{id: 'divine'}, {id: 'chaos'}, {id: 'sep'}, {id: 'unknown-id'},
+]}]});
+const goodScoutBody = JSON.stringify({Items: [
+	{ApiId: 'divine', CurrentPrice: 617.7},
+	{ApiId: 'chaos', CurrentPrice: 52.8},
+]});
+const expectedUrl = 'https://api.poe2scout.com/poe2/Leagues/Forbidden%20Rites/Currencies/ByCategory?Category=currency&PerPage=250';
 
-describe('initScoutCurrencies parsing', () => {
-	it('parses PascalCase response from new poe2scout API', () => {
-		const staticEntries = [
-			{id: 'divine'},
-			{id: 'chaos'},
-			{id: 'exalted'},
-			{id: 'regal'},
-		];
+let setup = scoutBody => {
+	requests = [];
+	responses = {'/data/static': staticBody, 'api.poe2scout.com': scoutBody};
+};
 
-		const scoutResponse = {
-			Items: [
-				{ApiId: 'divine', CurrentPrice: 200},
-				{ApiId: 'chaos', CurrentPrice: 0.02},
-				{ApiId: 'regal', CurrentPrice: 0.05},
-			],
-		};
-
-		let tuples = staticEntries
-			.map(({id}) => {
-				let price = scoutResponse.Items
-					?.find(line => line.ApiId === id)
-					?.CurrentPrice;
-				return [id, Number(price)];
-			})
-			.filter(v => v);
-
-		let currencies = Object.fromEntries(tuples);
-		currencies.exalted = 1;
-
-		assert.strictEqual(currencies.divine, 200);
-		assert.strictEqual(currencies.chaos, 0.02);
-		assert.strictEqual(currencies.regal, 0.05);
-		assert.strictEqual(currencies.exalted, 1);
+describe('initScoutCurrencies', () => {
+	it('requests the api.poe2scout.com endpoint (R1)', async () => {
+		setup(goodScoutBody);
+		await ApiConstants.initScoutCurrencies(true, 'Forbidden Rites');
+		assert.ok(requests.includes(expectedUrl), requests.join(", "));
 	});
 
-	it('filters out currencies not found in poe2scout (NaN)', () => {
-		const staticEntries = [
-			{id: 'divine'},
-			{id: 'unknown_currency'},
-		];
-
-		const scoutResponse = {
-			Items: [
-				{ApiId: 'divine', CurrentPrice: 200},
-			],
-		};
-
-		let tuples = staticEntries
-			.map(({id}) => {
-				let price = scoutResponse.Items
-					?.find(line => line.ApiId === id)
-					?.CurrentPrice;
-				return [id, Number(price)];
-			})
-			.filter(v => v);
-
-		let currencies = Object.fromEntries(tuples);
-
-		assert.strictEqual(currencies.divine, 200);
-		// NaN entries are filtered because [id, NaN] is truthy but Number(undefined) = NaN
-		// Actually ['unknown_currency', NaN] is truthy - this is a known issue
-		// The filter(v => v) filters arrays which are always truthy
-		// So unknown_currency will be NaN in the map
-		assert.ok(isNaN(currencies.unknown_currency));
+	it('shares apiBase with Poe2ScoutData (R2)', () => {
+		assert.strictEqual(Poe2ScoutData.apiBase, 'https://api.poe2scout.com/poe2');
+		assert.ok(expectedUrl.startsWith(Poe2ScoutData.apiBase));
 	});
 
-	it('handles empty Items array gracefully', () => {
-		const staticEntries = [{id: 'divine'}];
-		const scoutResponse = {Items: []};
-
-		let tuples = staticEntries
-			.map(({id}) => {
-				let price = scoutResponse.Items
-					?.find(line => line.ApiId === id)
-					?.CurrentPrice;
-				return [id, Number(price)];
-			})
-			.filter(v => v);
-
-		let currencies = Object.fromEntries(tuples);
-		currencies.exalted = 1;
-
-		assert.strictEqual(currencies.exalted, 1);
-		assert.ok(isNaN(currencies.divine));
+	it('parses prices and drops missing ids (R4)', async () => {
+		setup(goodScoutBody);
+		let result = await ApiConstants.initScoutCurrencies(true, 'Forbidden Rites');
+		assert.deepStrictEqual(result, {divine: 617.7, chaos: 52.8, exalted: 1});
 	});
 
-	it('handles missing Items property gracefully', () => {
-		const staticEntries = [{id: 'divine'}];
-		const scoutResponse = {};
+	it('rejects an HTML body', async () => {
+		setup('<!DOCTYPE html><html></html>');
+		await assert.rejects(ApiConstants.initScoutCurrencies(true, 'Forbidden Rites'));
+	});
 
-		let tuples = staticEntries
-			.map(({id}) => {
-				let price = scoutResponse.Items
-					?.find(line => line.ApiId === id)
-					?.CurrentPrice;
-				return [id, Number(price)];
-			})
-			.filter(v => v);
-
-		let currencies = Object.fromEntries(tuples);
-		currencies.exalted = 1;
-
-		assert.strictEqual(currencies.exalted, 1);
-		assert.ok(isNaN(currencies.divine));
+	it('rejects JSON without Items (R3)', async () => {
+		setup('{}');
+		await assert.rejects(ApiConstants.initScoutCurrencies(true, 'Forbidden Rites'), /no Items/);
 	});
 });
 
 describe('initCurrencies warning', () => {
-	it('sets currencyWarning on failure for poe2', async () => {
-		// Simulate the initCurrencies catch path
-		let currencyWarning = '';
-		const version2 = true;
+	it('warns and falls back on HTML body (R5)', async () => {
+		setup('<!DOCTYPE html><html></html>');
+		let origWarn = console.warn;
+		console.warn = () => {};
 		try {
-			throw new Error('fetch failed');
-		} catch (e) {
-			let source = version2 ? 'poe2scout.com' : 'poe.ninja';
-			currencyWarning = `Currency endpoint broken (${source}). Only exalted-priced items will be shown. Nag MDuh to check why it's broken.`;
+			let result = await ApiConstants.initCurrencies(true, 'X');
+			assert.deepStrictEqual(result, {exalted: 1});
+			assert.ok(apiConstants.currencyWarning.includes('poe2scout.com'));
+		} finally {
+			console.warn = origWarn;
 		}
-		assert.ok(currencyWarning.includes('poe2scout.com'));
-		assert.ok(currencyWarning.includes('Only exalted-priced items'));
-		assert.ok(currencyWarning.includes('Nag MDuh'));
 	});
 
-	it('sets currencyWarning on failure for poe1', async () => {
-		let currencyWarning = '';
-		const version2 = false;
+	it('warns on JSON without Items', async () => {
+		setup('{}');
+		let origWarn = console.warn;
+		console.warn = () => {};
 		try {
-			throw new Error('fetch failed');
-		} catch (e) {
-			let source = version2 ? 'poe2scout.com' : 'poe.ninja';
-			currencyWarning = `Currency endpoint broken (${source}). Only exalted-priced items will be shown. Nag MDuh to check why it's broken.`;
+			await ApiConstants.initCurrencies(true, 'X');
+			assert.ok(apiConstants.currencyWarning.includes('poe2scout.com'));
+		} finally {
+			console.warn = origWarn;
 		}
-		assert.ok(currencyWarning.includes('poe.ninja'));
 	});
 
-	it('clears currencyWarning on success', () => {
-		let currencyWarning = 'some old warning';
-		// Simulate success path
-		currencyWarning = '';
-		assert.strictEqual(currencyWarning, '');
-	});
-
-	it('returns fallback {exalted: 1} for poe2 on failure', () => {
-		const version2 = true;
-		const fallback = version2 ? {exalted: 1} : {chaos: 1};
-		assert.deepStrictEqual(fallback, {exalted: 1});
-	});
-
-	it('returns fallback {chaos: 1} for poe1 on failure', () => {
-		const version2 = false;
-		const fallback = version2 ? {exalted: 1} : {chaos: 1};
-		assert.deepStrictEqual(fallback, {chaos: 1});
-	});
-});
-
-describe('poe2scout URL construction', () => {
-	it('encodes league name in URL', () => {
-		const realm = 'poe2';
-		const league = 'Fate of the Vaal';
-		const url = `https://poe2scout.com/api/${realm}/Leagues/${encodeURIComponent(league)}/Currencies/ByCategory?Category=Currency&ReferenceCurrency=exalted&Page=1&PerPage=50`;
-		assert.ok(url.includes('Fate%20of%20the%20Vaal'));
-		assert.ok(!url.includes('Fate of the Vaal'));
-	});
-
-	it('uses poe2 realm for version2=true', () => {
-		const version2 = true;
-		const realm = version2 ? 'poe2' : 'poe1';
-		const url = `https://poe2scout.com/api/${realm}/Leagues/TestLeague/Currencies/ByCategory?Category=Currency&ReferenceCurrency=exalted&Page=1&PerPage=50`;
-		assert.ok(url.includes('/poe2/'));
-	});
-
-	it('uses poe1 realm for version2=false', () => {
-		const version2 = false;
-		const realm = version2 ? 'poe2' : 'poe1';
-		const url = `https://poe2scout.com/api/${realm}/Leagues/TestLeague/Currencies/ByCategory?Category=Currency&ReferenceCurrency=exalted&Page=1&PerPage=50`;
-		assert.ok(url.includes('/poe1/'));
-	});
-
-	it('includes /api/ prefix in URL', () => {
-		const realm = 'poe2';
-		const league = 'TestLeague';
-		const url = `https://poe2scout.com/api/${realm}/Leagues/${encodeURIComponent(league)}/Currencies/ByCategory?Category=Currency&ReferenceCurrency=exalted&Page=1&PerPage=50`;
-		assert.ok(url.startsWith('https://poe2scout.com/api/'));
+	it('clears the warning after a successful load', async () => {
+		setup(goodScoutBody);
+		apiConstants.currencyWarning = 'old warning';
+		let result = await ApiConstants.initCurrencies(true, 'X');
+		assert.strictEqual(apiConstants.currencyWarning, '');
+		assert.strictEqual(result.divine, 617.7);
 	});
 });

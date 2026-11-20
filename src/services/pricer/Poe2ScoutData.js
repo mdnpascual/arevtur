@@ -2,6 +2,8 @@ const configData = require('../config/configData');
 const Cache = require('../../util/Cache');
 const {get} = require('../../util/browserHttpRequest');
 
+let apiBase = 'https://api.poe2scout.com/poe2';
+
 let endpointTypes = [
 	['Currencies', 'currency'],
 	['Currencies', 'fragments'],
@@ -33,12 +35,12 @@ let cache = new Cache(12 * 60 * 1000, endpoint =>
 
 let getEndpoint = async endpointType => {
 	let league = configData.config.league;
-	let leagueData = await cache.get('https://api.poe2scout.com/poe2/Leagues');
+	let leagueData = await cache.get(`${apiBase}/Leagues`);
 	let leagueNickname = leagueData.find(data => data.Value === league).ShortName;
-	return `https://api.poe2scout.com/poe2/Leagues/${leagueNickname}/${endpointType[0]}/ByCategory?Category=${endpointType[1]}&PerPage=250`;
+	return `${apiBase}/Leagues/${leagueNickname}/${endpointType[0]}/ByCategory?Category=${endpointType[1]}&PerPage=250`;
 };
 
 let getData = async endpointType =>
 	cache.get(await getEndpoint(endpointType));
 
-module.exports = {endpointTypes, getEndpoint, getData};
+module.exports = {apiBase, endpointTypes, getEndpoint, getData};

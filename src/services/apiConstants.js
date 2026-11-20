@@ -1,5 +1,6 @@
 const {httpRequest, XPromise} = require('js-desktop-base');
 const poeNinjaApi = require('./poeNinjaApi');
+const Poe2ScoutData = require('./pricer/Poe2ScoutData');
 const configData = require('./config/configData');
 const {unique, escapeRegex} = require('../util/util');
 const nodeFetch = require('node-fetch');
@@ -351,28 +352,23 @@ class ApiConstants {
 	}
 
 	static async initScoutCurrencies(version2, league) {
-		let realm = version2 ? 'poe2' : 'poe1';
-		let scoutUrl = `https://poe2scout.com/api/${realm}/Leagues/${encodeURIComponent(league)}/Currencies/ByCategory?Category=Currency&ReferenceCurrency=exalted&Page=1&PerPage=50`;
+		let scoutUrl = `${Poe2ScoutData.apiBase}/Leagues/${encodeURIComponent(league)}/Currencies/ByCategory?Category=currency&PerPage=250`;
 
 		let staticData = ApiConstants.get('static', version2);
 		let currencyPrices = httpRequest.get(scoutUrl, {}, {accept: 'application/json'});
 		staticData = JSON.parse((await staticData).string);
 		currencyPrices = JSON.parse((await currencyPrices).string);
+		if (!Array.isArray(currencyPrices.Items))
+			throw new Error(`poe2scout response has no Items: ${scoutUrl}`);
 
 		let tuples = staticData.result
 			.find(({id}) => id === 'Currency').entries
-			.map(({id}) => {
-				let price = currencyPrices.Items
-					?.find(line => line.ApiId === id)
-					?.CurrentPrice;
-				return [id, Number(price)];
-			})
-			.filter(v => v);
+			.map(({id}) => [id, Number(currencyPrices.Items.find(line => line.ApiId === id)?.CurrentPrice)])
+			.filter(([, price]) => Number.isFinite(price) && price > 0);
 
 		let currencies = Object.fromEntries(tuples);
 		currencies.exalted = 1;
 		return currencies;
-		/* {alt: .125, ...} */
 	}
 
 	// items
