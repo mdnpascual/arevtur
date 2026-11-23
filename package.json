@@ -44,7 +44,10 @@
     "artifactName": "${name}-${version}-${os}-${arch}.${ext}",
     "files": [
       "resources",
-      "src"
+      "src",
+      "!node_modules/js-desktop-base/src/base/osScripts/keyHook",
+      "!node_modules/js-desktop-base/src/base/osScripts/keySender",
+      "!node_modules/js-desktop-base/src/base/osScripts/frontWindowTitle"
     ],
     "icon": "./resources/icon.png",
     "electronVersion": "33.3.2"

@@ -14,7 +14,6 @@ ipcMain.handle('open-dialog', async (event, arg) =>
 let windowWrappers = [
 	require('./updateCheck/updateCheck'),
 	require('./arevtur/arevtur'),
-	require('./keySnippet/keySnippet'),
 	require('./devOptions/devOptions'),
 ].filter(v => v);
 

@@ -6,9 +6,9 @@ This fork picks up development starting from version **0.5**, focusing on **PoE 
 
 ## Changes from the original
 
-### Open Trade (replaces Travel to Hideout)
+### Removed: in-game hotkeys (Ctrl+C pricer, Ctrl+Shift+H hideout)
 
-The "Travel to Hideout" feature was broken due to API changes. It has been replaced with an **Open Trade** button that constructs a targeted trade URL matching the item's exact stats, base type, and seller account, then opens it in your default browser. This lets you quickly navigate to the listing on the trade site.
+The in-game hotkeys from the original app have been removed entirely: **Ctrl+C** (price the copied item in a popup) and **Ctrl+Shift+H** (type `/hideout`). They relied on PowerShell scripts in the `js-desktop-base` library that install a system-wide keyboard hook, which antivirus software (for example ESET, as `GenScript.ACYX`) flags as a trojan. That's a false positive, but the app no longer uses or ships those scripts. Trade search, PoB integration, direct whisper and travel to hideout are not affected.
 
 ### Way of the Stonefist Ascendancy Support
 
