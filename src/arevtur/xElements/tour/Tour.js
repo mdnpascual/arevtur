@@ -94,6 +94,12 @@ customElements.define(name, class Tour extends XElement {
 					],
 					corner: {x: -1, y: 1},
 					align: {x: 1, y: 1},
+					enter: () => {
+						let inputBuild = deepQuery('x-input-build')[0];
+						this.restoreExpanded = inputBuild.expanded;
+						inputBuild.expanded = true;
+					},
+					leave: () => deepQuery('x-input-build')[0].expanded = this.restoreExpanded,
 				}, {
 					lines: ['4/6', 'You can further tune the query with these inputs.'],
 					elementQueries: [
@@ -227,12 +233,21 @@ customElements.define(name, class Tour extends XElement {
 	}
 
 	end() {
+		this.activeStep?.leave?.();
+		this.activeStep = null;
 		this.stepI = Infinity;
 		this.classList.add('hidden');
 		clearInterval(this.updateInterval);
 	}
 
 	update() {
+		let step = this.steps[this.stepI];
+		if (step !== this.activeStep) {
+			this.activeStep?.leave?.();
+			this.activeStep = step;
+			step?.enter?.();
+		}
+
 		if (this.stepI >= this.steps.length) {
 			configForRenderer.config = {tourComplete: true};
 			return;
@@ -240,7 +255,6 @@ customElements.define(name, class Tour extends XElement {
 
 		this.$('#prev').disabled = !this.stepI;
 
-		let step = this.steps[this.stepI];
 		let elements = step.elementQueries.map(query => deepQuery(query)[0]);
 		this.$('#text').textContent = step.lines.join('\n') || '';
 

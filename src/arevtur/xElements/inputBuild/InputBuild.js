@@ -10,7 +10,7 @@ const {updateElementChildren} = require('../../../util/util');
 
 customElements.define(name, class extends XElement {
 	static get attributeTypes() {
-		return {};
+		return {expanded: {boolean: true}};
 	}
 
 	static get htmlTemplate() {
@@ -18,6 +18,15 @@ customElements.define(name, class extends XElement {
 	}
 
 	connectedCallback() {
+		let body = this.$('#weights-body');
+		body.classList.add('no-transition');
+		this.expanded = localStorage.getItem('build-weights-expanded') === 'true';
+		requestAnimationFrame(() => body.classList.remove('no-transition'));
+		this.$('#weights-toggle').addEventListener('click', () => {
+			this.expanded = !this.expanded;
+			localStorage.setItem('build-weights-expanded', this.expanded);
+		});
+
 		this.$('#pob-path').defaultPath = appData.defaultPobPath;
 		this.$('#build-path').defaultPath = appData.defaultPobBuildsPath;
 		this.$('#pob-path').addEventListener('selected', () => this.saveConfig());
@@ -46,6 +55,13 @@ customElements.define(name, class extends XElement {
 
 		configForRenderer.addListener('change', config => this.loadConfig());
 		pobApi.addListener('change', async () => this.loadConfig());
+	}
+
+	set expanded(value) {
+		this.$('#weights-body').classList.toggle('expanded', value);
+		this.$('#weights-body').inert = !value;
+		this.$('#weights-toggle').classList.toggle('expanded-toggle', value);
+		this.$('#weights-toggle').setAttribute('aria-expanded', value);
 	}
 
 	async loadConfig() {

@@ -29,6 +29,44 @@
 	.attribute-weight::part(input) {
 		background-color: var(--colored-text-background-light-green)
 	}
+
+	.collapse-toggle {
+		margin-top: 4px;
+	}
+
+	.collapsible {
+		display: grid;
+		grid-template-rows: 0fr;
+		transition: grid-template-rows 200ms ease;
+	}
+
+	.collapsible.expanded {
+		grid-template-rows: 1fr;
+	}
+
+	.collapsible-inner {
+		overflow: hidden;
+		min-height: 0;
+	}
+
+	.chevron {
+		display: inline-block;
+		transition: transform 200ms ease;
+	}
+
+	.expanded-toggle .chevron {
+		transform: rotate(90deg);
+	}
+
+	.no-transition, .no-transition .chevron {
+		transition: none;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.collapsible, .chevron {
+			transition: none;
+		}
+	}
 </style>
 
 <span class="container pob">
@@ -39,6 +77,11 @@
 	<button id="reload" title="Click this if you've tweaked your build in PoB">Reload Build</button>
 	<button id="reset" title="Reset weights to default values. Can't be undone.">Reset</button>
 	<div class="tour-pob-configs">
+		<button id="weights-toggle" class="collapse-toggle" aria-expanded="false" aria-controls="weights-body">
+			<span class="chevron">▸</span> Scoring weights
+		</button>
+		<div id="weights-body" class="collapsible" inert>
+		<div class="collapsible-inner">
 		<x-arrangeable-list id="weights"></x-arrangeable-list>
 		<div class="version-1">
 			<label title="">
@@ -71,6 +114,8 @@
 				Infinite leech
 				<input id="infinite-leech-check" type="checkbox">
 			</label>
+		</div>
+		</div>
 		</div>
 	</div>
 </span>
