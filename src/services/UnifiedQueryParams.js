@@ -429,6 +429,16 @@ class UnifiedQueryParams {
 		};
 	}
 
+	// `query.type` is a base name string, or {option, discriminator} for bases that share a name.
+	static typeFromApiQuery(query) {
+		let type = query?.type;
+		if (typeof type === 'string')
+			return type;
+		if (typeof type?.option === 'string')
+			return type.option;
+		return '';
+	}
+
 	static async fromApiQueryParams(apiQueryParams) {
 		let filters = apiQueryParams.query?.filters;
 		let stats = apiQueryParams.query?.stats;
@@ -436,7 +446,7 @@ class UnifiedQueryParams {
 		let andStats = stats?.find(stats => stats.type === 'and');
 		let notStats = stats?.find(stats => stats.type === 'not');
 		let data = {
-			name: apiQueryParams.type || '',
+			name: UnifiedQueryParams.typeFromApiQuery(apiQueryParams.query),
 			typeText: await apiConstants.typeIdToText(
 				filters?.type_filters?.filters?.category?.option) || 'Any',
 			minValue: weightedStats?.value?.min || 0,
