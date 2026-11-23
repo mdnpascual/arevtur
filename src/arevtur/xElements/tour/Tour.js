@@ -139,7 +139,7 @@ customElements.define(name, class Tour extends XElement {
 					align: {x: -1, y: 1},
 				}, {
 					lines: ['6/6',
-						'The build value of this item; this is how PoB would sort the item as-is.'],
+						'The listed value of this item; this is how PoB would sort the item as-is.'],
 					elementQueries: [
 						'.button-pane #build-value',
 					],
@@ -147,7 +147,7 @@ customElements.define(name, class Tour extends XElement {
 					align: {x: -1, y: 1},
 				}, {
 					lines: ['6/6',
-						'The build value of this item after bench crafting the most valuable mod.'],
+						'The fitted value of this item after adding rune sockets / bench crafting the most valuable mod.'],
 					elementQueries: [
 						'#craft-value',
 					],

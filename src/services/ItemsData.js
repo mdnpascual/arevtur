@@ -14,7 +14,7 @@ class ItemsData extends Emitter {
 			showFilter: item => item.pricePromise.resolved.price !== Infinity,
 			trigger: null,
 		}, {
-			name: 'Build sorting',
+			name: 'Listed sorting',
 			description: [
 				'Sort by PoB\'s predicted affects on effective health, total DPS, etc.',
 				'Qualities non-corrupted/mirrored items to 20%.',
@@ -25,7 +25,7 @@ class ItemsData extends Emitter {
 			showFilter: item => item.pricePromise.resolved.price !== Infinity && item.buildValuePromise.resolved,
 			trigger: item => item.buildValuePromise,
 		}, {
-			name: 'Build + craft sorting',
+			name: 'Fitted sorting',
 			description: [
 				'Sort by PoB\'s predicted affects on effective health, total DPS, etc.',
 				'Qualities non-corrupted/mirrored items to 20%.',
@@ -38,6 +38,12 @@ class ItemsData extends Emitter {
 			trigger: item => item.craftValuePromise,
 		},
 	];
+
+	// sort names before the Build/Craft -> Listed/Fitted rename; still in users' localStorage
+	static legacyValueHandlerNames = {
+		'Build sorting': 'Listed sorting',
+		'Build + craft sorting': 'Fitted sorting',
+	};
 
 	constructor() {
 		super();

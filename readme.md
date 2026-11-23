@@ -30,6 +30,11 @@ Updated currency pricing API calls to use the latest poe2scout endpoints and res
 
 Auto-update source has been changed to this repository. Updates will be published here.
 
+## Some UI changes
+
+- Collapsable entry for character saves
+- Listed/Fitted renaming from Build/Craft
+
 ---
 
 ## Original README

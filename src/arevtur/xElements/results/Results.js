@@ -30,8 +30,9 @@ customElements.define(name, class extends XElement {
 			this.itemsData.setValueHandlerByName(this.$('#sort-build-value-input').value);
 			this.renderItemsData(false, true);
 		});
+		let savedSort = localStorage.getItem('results-sort');
 		this.$('#sort-build-value-input').value =
-			localStorage.getItem('results-sort') || ItemsData.valueHandlers[0].name;
+			ItemsData.legacyValueHandlerNames[savedSort] || savedSort || ItemsData.valueHandlers[0].name;
 		this.itemsData.setValueHandlerByName(this.$('#sort-build-value-input').value);
 
 		this.$('#price-per-value-input').addEventListener('change', () => {
